@@ -1,0 +1,150 @@
+#include<iostream>
+#include<fstream>
+#include<cstdlib>
+#include<iomanip>
+#include<vector>
+#include<algorithm>
+
+using namespace std;
+
+string KW[33] = {"auto", "break", "case", "char", "const", "continue",
+	"default", "do", "double", "else", "enum", "extern", "float",
+	"for", "foto", "if", "int", "long", "main", "register", "return", "short",
+	"signed", "sizeof", "static", "struct", "switch", "typeof", "union",
+	"unsigned", "void", "volatile", "while"};
+string ifelse_KW[3] = {"else if","if","else"};
+
+int main(){
+
+	/*----------input file name and worklevel----------*/
+	string filename;
+	int level;
+	
+	cout<<"Please enter the file name: ";
+	cin>>filename;
+	cout<<"Please choose the level(1,2,3,4): ";
+	cin>>level;
+	
+	/*--------------------read the file--------------------*/
+	ifstream inFile;
+	inFile.open(filename.c_str());//should input the entire file name, like: test_file.txt
+	if(inFile.fail())
+	{
+		cout<<"Open fail!"<<endl;
+		exit(1);
+	}
+	string buf;
+	
+	/*--------------------work level 1--------------------*/
+	int total_num = 0;
+	vector <string> words; //to store all words in file
+	
+	while (getline(inFile,buf)){
+		//cout<<buf<<endl;
+		int i = 1, j = 1;    
+		while(i < int(buf.size()) && j < int(buf.size())) {
+			if (isalpha(buf[i])) {
+				if (!isalpha(buf[j] )) 
+				{
+					string s = buf.substr(i, j-i);//提取buf中i到j-1位的字符串
+					words.push_back(s);
+					for (int k = 0; k < 33; k++) {
+						if (s == KW[k])
+							total_num += 1;
+					}
+					i = j+1;
+					j = i;
+				}
+				else
+					j++;
+			}
+			else{
+				i++;
+				j = i;
+			}
+		}
+	}
+	cout<<"total num: "<<total_num<<endl;
+//	for (int i=0;i<words.size();i++){
+//		cout<<words[i]<<endl;
+//	}
+
+	/*--------------------work level 2--------------------*/
+	
+	if (level>=2){
+		int switch_count = 0;
+		int case_count = 0;
+		vector <int> Case;
+		
+		for (int i=0;i<words.size();i++){
+			if (words[i] == "switch"){
+				switch_count += 1;
+				Case.push_back(case_count);
+				case_count = 0;//再一次出现switch说明case需要重置
+			}
+			else if (words[i] == "case"){
+				case_count += 1;
+			}
+			else
+				continue;	
+		}
+		Case.push_back(case_count);
+		cout<<"switch num: "<<switch_count<<endl;
+		cout<<"case num: ";
+		for(int i=1;i<int(Case.size());i++)
+		{
+			cout<<Case[i]<<"  ";
+		}
+		cout<<endl;
+		inFile.close();
+	}	
+	/*--------------------work level 3 and 4--------------------*/
+	vector<string> ifelse; 
+	int ifelse_count = 0;
+	int ifelseif_count = 0;
+	int ifelse_KW_count[3] = {0};
+	if(level>=3){
+		inFile.open(filename.c_str());
+		if(inFile.fail())
+		{
+			cout<<"Open fail!"<<endl;
+			exit(1);
+		}
+		while (getline(inFile,buf))
+		{
+			for(int i = 0;i < 3;i++)
+			{
+				if(int(buf.find(ifelse_KW[i]) != -1))
+					ifelse_KW_count[i] = 1;
+				else
+					ifelse_KW_count[i] = 0;
+			}    
+			if(ifelse_KW_count[1] == 1 && ifelse_KW_count[2] == 1)
+			{
+				ifelse_KW_count[0]=1;
+				ifelse_KW_count[1]=0;
+				ifelse_KW_count[2]=0;
+			}    
+			for(int i = 0;i < 3;i++)
+			{
+				if(ifelse_KW_count[i] == 1)
+					ifelse.push_back(ifelse_KW[i]);    
+			}
+		}
+		for(int i=0;i<int(ifelse.size())-1;i++)
+		{
+			if(ifelse[i] == "if" && ifelse[i+1] == "else")
+			{
+				ifelse_count += 1;
+			}
+			if(ifelse[i] == "if" && ifelse[i+1] == "else")
+			{
+				ifelseif_count += 1;
+			}    
+		}
+		if(level>2)
+			cout<<"if-else num: "<<ifelse_count<<endl;
+		if(level>3)
+			cout<<"if-elseif-else num: "<<ifelseif_count<<endl;
+	}	
+}
